@@ -16,11 +16,15 @@ import com.jme3.ui.Picture
 import snma.game.pong.messages.PhysicsState
 import snma.game.pong.messages.PhysicsStateMessage
 
-class Model(private val stateManager: AppStateManager, private val assetManager: AssetManager, isGuiEnabled: Boolean) {
+class Model(
+    private val stateManager: AppStateManager,
+    private val assetManager: AssetManager,
+    isGuiEnabled: Boolean,
+    private val guiNode: Node // HACK: without attaching to scene graph physics may lag
+) {
     private val player: Node
     private val enemy: Node
     private val ball: Node
-    private var guiNode: Node? = null
     val xLimits = Pair(Constants.PLAYER_WIDTH / 2f, Constants.SCREEN_WIDTH - Constants.PLAYER_WIDTH / 2f)
     var playerPos: Float
         get() = player.localTranslation.x
@@ -47,6 +51,11 @@ class Model(private val stateManager: AppStateManager, private val assetManager:
             Preconditions.checkArgument(player.getUserData<Int>("widthInt") == Constants.PLAYER_WIDTH)
             Preconditions.checkArgument(player.getUserData<Int>("heightInt") == Constants.PLAYER_HEIGHT)
             Preconditions.checkArgument(ball.getUserData<Int>("radiusInt") == Constants.BALL_RADIUS)
+        }
+        guiNode.apply {
+            attachChild(player)
+            attachChild(enemy)
+            attachChild(ball)
         }
 
         player.setLocalTranslation(Constants.SCREEN_WIDTH / 2f, Constants.PLAYER_HEIGHT / 2f, 0f)
@@ -95,15 +104,6 @@ class Model(private val stateManager: AppStateManager, private val assetManager:
         }
     }
 
-    fun attachToGuiNode(guiNode: Node) {
-        guiNode.apply {
-            attachChild(player)
-            attachChild(enemy)
-            attachChild(ball)
-        }
-        this.guiNode = guiNode
-    }
-
     fun generateMessage(swap: Boolean): PhysicsStateMessage {
         val ballControl = ball.getControl(RigidBodyControl::class.java)
         return if (!swap) {
@@ -140,11 +140,9 @@ class Model(private val stateManager: AppStateManager, private val assetManager:
     fun destroy() {
         bulletAppState.stopPhysics()
         stateManager.detach(bulletAppState)
-        if (guiNode != null) {
-            guiNode!!.detachChild(player)
-            guiNode!!.detachChild(enemy)
-            guiNode!!.detachChild(ball)
-        }
+        guiNode.detachChild(player)
+        guiNode.detachChild(enemy)
+        guiNode.detachChild(ball)
     }
 
     private fun loadImageNode(name: String): Node {

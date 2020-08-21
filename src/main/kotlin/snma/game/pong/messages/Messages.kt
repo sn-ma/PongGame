@@ -75,7 +75,7 @@ data class PhysicsState(var pos: Vector2f, var rot: Float, var linearVel: Vector
         control.angularVelocity = _angularVel
     }
 }
-val tmpVec = Vector3f()
+private val tmpVec = Vector3f()
 
 @Serializable
 class PhysicsStateMessage(

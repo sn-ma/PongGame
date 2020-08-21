@@ -56,10 +56,7 @@ class ServerApp(
                 if (server.connections.size == 2) {
                     enqueue {
                         players = ArrayList(server.connections)
-                        model = Model(stateManager, assetManager, showTheGame)
-                        if (showTheGame) {
-                            model!!.attachToGuiNode(guiNode)
-                        }
+                        model = Model(stateManager, assetManager, showTheGame, guiNode)
                     }
                     log("2 players connected, starting the game")
                 } else if (server.connections.size > 2) {

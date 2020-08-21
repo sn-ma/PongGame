@@ -41,8 +41,7 @@ class ClientApp(
         isPauseOnLostFocus = false
         flyCam.isEnabled = false
 
-        model = Model(stateManager, assetManager, true)
-        model.attachToGuiNode(guiNode)
+        model = Model(stateManager, assetManager, true, guiNode)
 
         client = Network.createClient(Constants.GAME_NAME, Constants.GAME_VERSION)!!
         client.addClientStateListener(object : ClientStateListener {
