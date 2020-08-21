@@ -142,8 +142,6 @@ class Model(private val stateManager: AppStateManager, private val assetManager:
 
     fun debugLog() {
         val ballControl = ball.getControl(RigidBodyControl::class.java)
-
-        println("Rot. ${ballControl.physicsRotation.toAngleAxis(Vector3f.UNIT_Z)}") // FIXME rm
     }
 
     private fun loadImageNode(name: String): Node {

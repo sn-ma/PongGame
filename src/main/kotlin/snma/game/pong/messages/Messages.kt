@@ -29,17 +29,21 @@ data class PhysicsState(var pos: Vector2f, var rot: Float, var linearVel: Vector
         )
 
         fun ofRigidBody(control: RigidBodyControl, invert: Boolean): PhysicsState {
+            var angle = control.physicsRotation.toAngleAxis(tmpVec)
+            if (tmpVec.z < 0f) {
+                angle *= -1f
+            }
             return if (!invert) {
                 PhysicsState(
                     pos = Vector2f(control.physicsLocation.x, control.physicsLocation.y),
-                    rot = control.physicsRotation.toAngleAxis(Vector3f.UNIT_Z),
+                    rot = angle,
                     linearVel = Vector2f(control.linearVelocity.x, control.linearVelocity.y),
                     angularVel = control.angularVelocity.z,
                 )
             } else {
                 PhysicsState(
                     pos = Vector2f(control.physicsLocation.x, Constants.SCREEN_HEIGHT - control.physicsLocation.y),
-                    rot = -control.physicsRotation.toAngleAxis(Vector3f.UNIT_Z),
+                    rot = -angle,
                     linearVel = Vector2f(control.linearVelocity.x, -control.linearVelocity.y),
                     angularVel = -control.angularVelocity.z,
                 )
@@ -71,6 +75,7 @@ data class PhysicsState(var pos: Vector2f, var rot: Float, var linearVel: Vector
         control.angularVelocity = _angularVel
     }
 }
+val tmpVec = Vector3f()
 
 @Serializable
 class PhysicsStateMessage(
