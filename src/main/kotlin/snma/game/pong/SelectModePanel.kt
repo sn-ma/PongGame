@@ -8,6 +8,7 @@ import snma.game.pong.server.ServerApp
 import java.awt.Color
 import javax.swing.*
 import kotlin.Exception
+import kotlin.system.exitProcess
 
 const val DEFAULT_PORT = 4321
 
@@ -58,8 +59,9 @@ class SelectModePanel(switchPanelCbc: (JPanel) -> Unit): JTabbedPane() {
             }
         })
 
-        addTab("Server", JPanel(MigLayout("wrap 2, fill", "[][grow]", "[][][grow]")).apply {
+        addTab("Server", JPanel(MigLayout("wrap 2, fill", "[][grow]", "[][][][grow]")).apply {
             val portField = JTextField("$DEFAULT_PORT")
+            val showGuiCheckbox = JCheckBox("Show the game")
             val errorLabel = JLabel().apply {
                 foreground = Color.RED
             }
@@ -68,9 +70,30 @@ class SelectModePanel(switchPanelCbc: (JPanel) -> Unit): JTabbedPane() {
                     errorLabel.text = ""
 
                     try {
-                        ServerApp(portField.text.toInt()).apply {
-                            start(JmeContext.Type.Headless)
-                            switchPanelCbc(view)
+                        if (showGuiCheckbox.isSelected) {
+                            ServerApp(
+                                port = portField.text.toInt(),
+                                showTheGame = true,
+                                onExit = { exitProcess(0) }
+                            ).apply {
+                                setSettings(AppSettings(true).apply {
+                                    title = "Pong Game: SERVER"
+                                    setResolution(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
+                                    samples = 4
+                                    isVSync = true
+                                })
+                                start(JmeContext.Type.Display)
+                                switchPanelCbc(view)
+                            }
+                        } else {
+                            ServerApp(
+                                port = portField.text.toInt(),
+                                showTheGame = false,
+                                onExit = { exitProcess(0) }
+                            ).apply {
+                                start(JmeContext.Type.Headless)
+                                switchPanelCbc(view)
+                            }
                         }
                     } catch (ex: Exception) {
                         errorLabel.text = "Failed: $ex"
@@ -79,7 +102,9 @@ class SelectModePanel(switchPanelCbc: (JPanel) -> Unit): JTabbedPane() {
             }
 
             add(JLabel("Port:"))
-            add(portField)
+            add(portField, "growx")
+
+            add(showGuiCheckbox, "span")
 
             add(errorLabel, "span")
 

@@ -16,50 +16,51 @@ import com.jme3.ui.Picture
 import snma.game.pong.messages.PhysicsState
 import snma.game.pong.messages.PhysicsStateMessage
 
-class Model(private val stateManager: AppStateManager, private val assetManager: AssetManager, private val isClient: Boolean) {
+class Model(private val stateManager: AppStateManager, private val assetManager: AssetManager, isGuiEnabled: Boolean) {
     private val player: Node
     private val enemy: Node
     private val ball: Node
+    private var guiNode: Node? = null
     val xLimits = Pair(Constants.PLAYER_WIDTH / 2f, Constants.SCREEN_WIDTH - Constants.PLAYER_WIDTH / 2f)
     var playerPos: Float
         get() = player.localTranslation.x
         set(value) {
             val loc = player.localTranslation
-            loc.set(value, Constants.PLAYER_HEIGHT / 2f, -500f) // FIXME do we need this -500?
+            loc.set(value, Constants.PLAYER_HEIGHT / 2f, 0f)
             player.localTranslation = loc
         }
     var enemyPos: Float
         get() = enemy.localTranslation.x
         set(value) {
             val loc = enemy.localTranslation
-            loc.set(value, Constants.SCREEN_HEIGHT - Constants.PLAYER_HEIGHT / 2f, -500f)
+            loc.set(value, Constants.SCREEN_HEIGHT - Constants.PLAYER_HEIGHT / 2f, 0f)
             enemy.localTranslation = loc
         }
 
     private val bulletAppState: BulletAppState
 
     init {
-        player = if (isClient) loadImageNode("player") else Node()
-        enemy = if (isClient) loadImageNode("player") else Node()
-        ball = if (isClient) loadImageNode("ball") else Node()
-        if (isClient) {
+        player = if (isGuiEnabled) loadImageNode("player") else Node()
+        enemy = if (isGuiEnabled) loadImageNode("player") else Node()
+        ball = if (isGuiEnabled) loadImageNode("ball") else Node()
+        if (isGuiEnabled) {
             Preconditions.checkArgument(player.getUserData<Int>("widthInt") == Constants.PLAYER_WIDTH)
             Preconditions.checkArgument(player.getUserData<Int>("heightInt") == Constants.PLAYER_HEIGHT)
             Preconditions.checkArgument(ball.getUserData<Int>("radiusInt") == Constants.BALL_RADIUS)
         }
 
-        player.setLocalTranslation(Constants.SCREEN_WIDTH / 2f, Constants.PLAYER_HEIGHT / 2f, -500f)
-        enemy.setLocalTranslation(Constants.SCREEN_WIDTH / 2f, Constants.SCREEN_HEIGHT - Constants.PLAYER_HEIGHT / 2f, -500f)
+        player.setLocalTranslation(Constants.SCREEN_WIDTH / 2f, Constants.PLAYER_HEIGHT / 2f, 0f)
+        enemy.setLocalTranslation(Constants.SCREEN_WIDTH / 2f, Constants.SCREEN_HEIGHT - Constants.PLAYER_HEIGHT / 2f, 0f)
         ball.setLocalTranslation(Constants.SCREEN_WIDTH / 2f, Constants.SCREEN_HEIGHT / 2f, 0f)
 
-        bulletAppState = BulletAppState()
+        bulletAppState = BulletAppState(Vector3f(-50f, -50f, -50f), Vector3f(Constants.SCREEN_WIDTH + 50f, Constants.SCREEN_HEIGHT + 50f, 50f))
         stateManager.attach(bulletAppState)
         bulletAppState.physicsSpace.setGravity(Vector3f.ZERO)
 
         ball.addControl(RigidBodyControl(SphereCollisionShape(Constants.BALL_RADIUS.toFloat()), 1f).apply {
             friction = 0.5f
             restitution = 1f
-            linearVelocity = /*if (isClient) Vector3f.ZERO else*/ Vector3f(100f, -200f, 0f)
+            linearVelocity = Vector3f(100f, -100f, 0f)
             angularVelocity = Vector3f(0f, 0f, 10f)
         })
         bulletAppState.physicsSpace.add(ball)
@@ -100,6 +101,7 @@ class Model(private val stateManager: AppStateManager, private val assetManager:
             attachChild(enemy)
             attachChild(ball)
         }
+        this.guiNode = guiNode
     }
 
     fun generateMessage(swap: Boolean): PhysicsStateMessage {
@@ -138,10 +140,11 @@ class Model(private val stateManager: AppStateManager, private val assetManager:
     fun destroy() {
         bulletAppState.stopPhysics()
         stateManager.detach(bulletAppState)
-    }
-
-    fun debugLog() {
-        val ballControl = ball.getControl(RigidBodyControl::class.java)
+        if (guiNode != null) {
+            guiNode!!.detachChild(player)
+            guiNode!!.detachChild(enemy)
+            guiNode!!.detachChild(ball)
+        }
     }
 
     private fun loadImageNode(name: String): Node {

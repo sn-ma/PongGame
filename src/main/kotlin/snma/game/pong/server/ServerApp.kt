@@ -17,7 +17,11 @@ import javax.swing.SwingUtilities
 import kotlin.system.exitProcess
 
 
-class ServerApp(private val port: Int) : SimpleApplication() {
+class ServerApp(
+    private val port: Int,
+    private val showTheGame: Boolean,
+    private val onExit: () -> Unit,
+) : SimpleApplication() {
     private val textPane = JTextArea().apply {
         isEditable = false
     }
@@ -29,7 +33,6 @@ class ServerApp(private val port: Int) : SimpleApplication() {
     private var players = listOf<HostedConnection>()
     private var model: Model? = null
 
-    private var requiredAction: Action? = null
     private var lastUpdateTime: Long = 0L
 
     private fun log(msg: String) {
@@ -42,6 +45,9 @@ class ServerApp(private val port: Int) : SimpleApplication() {
     }
 
     override fun simpleInitApp() {
+        isPauseOnLostFocus = false
+        flyCam.isEnabled = false
+
         log("Launching on port $port...")
         server = Network.createServer(Constants.GAME_NAME, Constants.GAME_VERSION, port, port)
         server.addConnectionListener(object : ConnectionListener {
@@ -50,9 +56,12 @@ class ServerApp(private val port: Int) : SimpleApplication() {
                 if (server.connections.size == 2) {
                     enqueue {
                         players = ArrayList(server.connections)
-                        requiredAction = Action.START_GAME
+                        model = Model(stateManager, assetManager, showTheGame)
+                        if (showTheGame) {
+                            model!!.attachToGuiNode(guiNode)
+                        }
                     }
-                    log("2 players connected, starting game")
+                    log("2 players connected, starting the game")
                 } else if (server.connections.size > 2) {
                     log("Kicking an extra player")
                     connection.close("Too much players!")
@@ -64,8 +73,15 @@ class ServerApp(private val port: Int) : SimpleApplication() {
                     log("Disconnected ${connection.id} from ${connection.address}")
                 }
                 if (connection in players) {
-                    requiredAction = Action.STOP_GAME
                     log("Player disconnected, stopping the game")
+                    enqueue {
+                        if (model != null) {
+                            model!!.destroy()
+                            model = null
+                        }
+                        players = listOf()
+                        server.connections.forEach{ it.close("End of game") }
+                    }
                 }
             }
         })
@@ -91,31 +107,12 @@ class ServerApp(private val port: Int) : SimpleApplication() {
     }
 
     override fun simpleUpdate(tpf: Float) {
-        when (requiredAction) {
-            Action.START_GAME -> {
-                model = Model(stateManager, assetManager, false)
-            }
-            Action.STOP_GAME -> {
-                if (model != null) {
-                    model!!.destroy()
-                    model = null
-                }
-                players = listOf()
-                server.connections.forEach{ it.close("End of game") }
-            }
-            null -> {}
-            else -> {
-                log("Unexpected action: $requiredAction")
-            }
-        }
-        requiredAction = null
-
         if (model != null && players.size == 2) {
             val curTime = System.currentTimeMillis()
             if (lastUpdateTime + Constants.UPDATE_TIME_MILLIS <= curTime) {
                 lastUpdateTime = curTime
 
-                model!!.setBallVerticalSpeed(100f)
+                model!!.setBallVerticalSpeed(100f) // Hack
 
                 val normalMsg = model!!.generateMessage(false)
                 model!!.applyMessage(normalMsg)
@@ -123,17 +120,11 @@ class ServerApp(private val port: Int) : SimpleApplication() {
                 players[1].send(model!!.generateMessage(true))
             }
         }
-        model?.debugLog()
     }
 
     override fun destroy() {
         server.close()
-
         super.destroy()
+        onExit()
     }
-}
-
-private enum class Action {
-    START_GAME,
-    STOP_GAME,
 }
