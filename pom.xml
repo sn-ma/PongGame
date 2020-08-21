@@ -15,9 +15,9 @@
         <kotlin.version>1.4.0</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <junit.version>4.12</junit.version>
-        <java.version>1.8</java.version> <!-- Unfortunately it crashes when running with java>1.8 -->
+        <java.version>1.8</java.version>
         <jme.version>3.3.2-stable</jme.version>
-        <main.class>snma.game.pong.MainKt</main.class>
+        <main.class>snma.game.pong.startup.MainKt</main.class>
     </properties>
 
     <dependencies>
@@ -63,6 +63,11 @@
         <dependency>
             <groupId>org.jmonkeyengine</groupId>
             <artifactId>jme3-bullet-native</artifactId>
+            <version>${jme.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-effects</artifactId>
             <version>${jme.version}</version>
         </dependency>
 

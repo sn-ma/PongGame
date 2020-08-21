@@ -1,4 +1,4 @@
-package snma.game.pong
+package snma.game.pong.startup
 
 import java.awt.Dimension
 import javax.swing.JFrame

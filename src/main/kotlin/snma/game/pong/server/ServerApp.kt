@@ -7,14 +7,14 @@ import com.jme3.network.Network
 import com.jme3.network.Server
 import net.miginfocom.swing.MigLayout
 import snma.game.pong.Constants
-import snma.game.pong.Model
 import snma.game.pong.messages.ClientMovedMessage
 import snma.game.pong.messages.Messages
+import snma.game.pong.model.Model
+import snma.game.pong.model.PlayerCollision
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
-import kotlin.system.exitProcess
 
 
 class ServerApp(
@@ -57,6 +57,12 @@ class ServerApp(
                     enqueue {
                         players = ArrayList(server.connections)
                         model = Model(stateManager, assetManager, showTheGame, guiNode)
+
+                        model!!.setCollisionListener { collision ->
+                            if (collision is PlayerCollision) {
+                                model!!.adjustBallHorizontalVelocity(50f, 2f, 1f)
+                            }
+                        }
                     }
                     log("2 players connected, starting the game")
                 } else if (server.connections.size > 2) {
@@ -109,7 +115,7 @@ class ServerApp(
             if (lastUpdateTime + Constants.UPDATE_TIME_MILLIS <= curTime) {
                 lastUpdateTime = curTime
 
-                model!!.setBallVerticalSpeed(100f) // Hack
+                model!!.setBallVerticalVelocity(100f) // Hack
 
                 val normalMsg = model!!.generateMessage(false)
                 model!!.applyMessage(normalMsg)

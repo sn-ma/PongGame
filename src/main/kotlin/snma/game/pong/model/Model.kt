@@ -1,4 +1,4 @@
-package snma.game.pong
+package snma.game.pong.model
 
 import com.google.common.base.Preconditions
 import com.jme3.app.state.AppStateManager
@@ -8,13 +8,16 @@ import com.jme3.bullet.collision.shapes.BoxCollisionShape
 import com.jme3.bullet.collision.shapes.PlaneCollisionShape
 import com.jme3.bullet.collision.shapes.SphereCollisionShape
 import com.jme3.bullet.control.RigidBodyControl
+import com.jme3.math.FastMath
 import com.jme3.math.Plane
 import com.jme3.math.Vector3f
 import com.jme3.scene.Node
 import com.jme3.texture.Texture2D
 import com.jme3.ui.Picture
+import snma.game.pong.Constants
 import snma.game.pong.messages.PhysicsState
 import snma.game.pong.messages.PhysicsStateMessage
+import kotlin.math.absoluteValue
 
 class Model(
     private val stateManager: AppStateManager,
@@ -25,6 +28,8 @@ class Model(
     private val player: Node
     private val enemy: Node
     private val ball: Node
+    private val walls: List<Node>
+    private val floors: List<Node>
     val xLimits = Pair(Constants.PLAYER_WIDTH / 2f, Constants.SCREEN_WIDTH - Constants.PLAYER_WIDTH / 2f)
     var playerPos: Float
         get() = player.localTranslation.x
@@ -40,6 +45,7 @@ class Model(
             loc.set(value, Constants.SCREEN_HEIGHT - Constants.PLAYER_HEIGHT / 2f, 0f)
             enemy.localTranslation = loc
         }
+    private var collisionListener: ((Collision) -> Unit)? = null
 
     private val bulletAppState: BulletAppState
 
@@ -86,12 +92,7 @@ class Model(
             bulletAppState.physicsSpace.add(k)
         }
 
-        for ((normal, shift) in listOf(
-            Vector3f(-1f, 0f, 0f) to -Constants.SCREEN_WIDTH.toFloat(),
-            Vector3f(1f, 0f, 0f) to 0f,
-            Vector3f(0f, 1f, 0f) to 0f - 20f,
-            Vector3f(0f, -1f, 0f) to -Constants.SCREEN_HEIGHT.toFloat() - 20f,
-        )) {
+        fun addWall(normal: Vector3f, shift: Float): Node {
             val wall = Node()
             wall.addControl(RigidBodyControl(
                 PlaneCollisionShape(Plane(normal, shift)),
@@ -101,6 +102,33 @@ class Model(
                 restitution = 1f
             })
             bulletAppState.physicsSpace.add(wall)
+            guiNode.attachChild(wall)
+            return wall
+        }
+
+        walls = listOf(
+            addWall(Vector3f(-1f, 0f, 0f), -Constants.SCREEN_WIDTH.toFloat()),
+            addWall(Vector3f(1f, 0f, 0f), 0f)
+        )
+        floors = listOf(
+            addWall(Vector3f(0f, 1f, 0f), 0f - 20f),
+            addWall(Vector3f(0f, -1f, 0f), -Constants.SCREEN_HEIGHT.toFloat() - 20f)
+        )
+
+        bulletAppState.physicsSpace.addCollisionListener { event ->
+            if (collisionListener == null) {
+                return@addCollisionListener
+            }
+            val collidedWith = if (event.nodeA == ball) event.nodeB else if (event.nodeB == ball) event.nodeA else return@addCollisionListener
+            val pos = event.positionWorldOnA // TODO check it is what we need
+            val collision = when (collidedWith) {
+                player -> PlayerCollision(pos, true)
+                enemy -> PlayerCollision(pos, false)
+                in walls -> WallCollision(pos)
+                in floors -> FloorCollision(pos)
+                else -> throw RuntimeException("Unexpected collision object: $collidedWith")
+            }
+            collisionListener?.invoke(collision)
         }
     }
 
@@ -130,11 +158,24 @@ class Model(
         message.ball.applyToRigidBody(ballControl)
     }
 
-    fun setBallVerticalSpeed(vSpeed: Float) {
+    fun setCollisionListener(listener: (Collision) -> Unit) {
+        this.collisionListener = listener
+    }
+
+    fun setBallVerticalVelocity(vVelocity: Float) {
         val ballControl = ball.getControl(RigidBodyControl::class.java)
         val vel = ballControl.linearVelocity
-        vel.y = if (vel.y > 0) vSpeed else -vSpeed
+        vel.y = if (vel.y > 0) vVelocity else -vVelocity
         ballControl.linearVelocity = vel
+    }
+
+    fun adjustBallHorizontalVelocity(minVelocity: Float, factor: Float, chance: Float) {
+        val ballControl = ball.getControl(RigidBodyControl::class.java)
+        val vel = ballControl.linearVelocity
+        if (vel.x.absoluteValue < minVelocity && (chance >= 1f || FastMath.rand.nextFloat() <= chance)) {
+            vel.x += minVelocity * factor * (0.5f - FastMath.rand.nextFloat()) * 2f
+            ballControl.linearVelocity = vel
+        }
     }
 
     fun destroy() {

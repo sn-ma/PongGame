@@ -1,13 +1,13 @@
-package snma.game.pong
+package snma.game.pong.startup
 
 import com.jme3.system.AppSettings
 import com.jme3.system.JmeContext
 import net.miginfocom.swing.MigLayout
+import snma.game.pong.Constants
 import snma.game.pong.client.ClientApp
 import snma.game.pong.server.ServerApp
 import java.awt.Color
 import javax.swing.*
-import kotlin.Exception
 import kotlin.system.exitProcess
 
 const val DEFAULT_PORT = 4321

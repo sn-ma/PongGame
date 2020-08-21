@@ -1,26 +1,19 @@
 package snma.game.pong.client
 
-import com.google.common.base.Preconditions
 import com.jme3.app.SimpleApplication
-import com.jme3.bullet.BulletAppState
-import com.jme3.bullet.collision.shapes.BoxCollisionShape
-import com.jme3.bullet.collision.shapes.SphereCollisionShape
-import com.jme3.bullet.control.RigidBodyControl
 import com.jme3.input.KeyInput
 import com.jme3.input.controls.AnalogListener
 import com.jme3.input.controls.KeyTrigger
-import com.jme3.math.Vector3f
 import com.jme3.network.Client
 import com.jme3.network.ClientStateListener
 import com.jme3.network.Network
 import com.jme3.network.NetworkClient
-import com.jme3.scene.Node
-import com.jme3.texture.Texture2D
-import com.jme3.ui.Picture
+import com.jme3.post.FilterPostProcessor
+import com.jme3.post.filters.BloomFilter
 import snma.game.pong.Constants
-import snma.game.pong.Model
 import snma.game.pong.messages.ClientMovedMessage
 import snma.game.pong.messages.PhysicsStateMessage
+import snma.game.pong.model.Model
 import kotlin.math.max
 import kotlin.math.min
 
@@ -74,9 +67,18 @@ class ClientApp(
             var newPos = model.playerPos + dx
             newPos = min(max(model.xLimits.first, newPos), model.xLimits.second)
             client.send(ClientMovedMessage(newPos))
-//            model.playerPos = newPos
-//            model.enemyPos = newPos
+            model.playerPos = newPos
         }, Input.LEFT.name, Input.RIGHT.name)
+
+        val fpp = FilterPostProcessor(assetManager)
+        fpp.addFilter(BloomFilter().apply {
+            bloomIntensity = 2f
+            exposurePower = 2f
+            exposureCutOff = 0f
+            blurScale = 1.5f
+        })
+        guiViewPort.addProcessor(fpp)
+        guiViewPort.isClearColor = true
     }
 
 //    private var lastUpdateTime = 0L;
