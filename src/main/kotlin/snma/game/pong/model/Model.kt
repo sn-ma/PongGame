@@ -75,8 +75,8 @@ class Model(
         ball.addControl(RigidBodyControl(SphereCollisionShape(Constants.BALL_RADIUS.toFloat()), 1f).apply {
             friction = 0.5f
             restitution = 1f
-            linearVelocity = Vector3f(100f, -100f, 0f)
-            angularVelocity = Vector3f(0f, 0f, 10f)
+            linearVelocity = Vector3f.ZERO
+            angularVelocity = Vector3f.ZERO
         })
         bulletAppState.physicsSpace.add(ball)
 
@@ -169,11 +169,11 @@ class Model(
         ballControl.linearVelocity = vel
     }
 
-    fun adjustBallHorizontalVelocity(minVelocity: Float, factor: Float, chance: Float) {
+    fun adjustBallHorizontalVelocity(minVelocityKoeff: Float, factor: Float, chance: Float) {
         val ballControl = ball.getControl(RigidBodyControl::class.java)
         val vel = ballControl.linearVelocity
-        if (vel.x.absoluteValue < minVelocity && (chance >= 1f || FastMath.rand.nextFloat() <= chance)) {
-            vel.x += minVelocity * factor * (0.5f - FastMath.rand.nextFloat()) * 2f
+        if (vel.x.absoluteValue < minVelocityKoeff * vel.y.absoluteValue && (chance >= 1f || FastMath.rand.nextFloat() <= chance)) {
+            vel.x += vel.y * factor * (0.5f - FastMath.rand.nextFloat()) * 2f
             ballControl.linearVelocity = vel
         }
     }

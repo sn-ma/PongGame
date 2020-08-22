@@ -58,9 +58,12 @@ class ServerApp(
                         players = ArrayList(server.connections)
                         model = Model(stateManager, assetManager, showTheGame, guiNode)
 
+                        model!!.setBallVerticalVelocity(100f) // Hack
+                        model!!.adjustBallHorizontalVelocity(1f, 3f, 1f)
+
                         model!!.setCollisionListener { collision ->
                             if (collision is PlayerCollision) {
-                                model!!.adjustBallHorizontalVelocity(50f, 2f, 1f)
+                                model!!.adjustBallHorizontalVelocity(0.3f, 2f, 1f)
                             }
                         }
                     }

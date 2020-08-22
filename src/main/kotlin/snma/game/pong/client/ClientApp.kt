@@ -49,8 +49,8 @@ class ClientApp(
         })
         client.addMessageListener { _, message ->
             when (message) {
-                is PhysicsStateMessage -> {
-                    enqueue { model.applyMessage(message) }
+                is PhysicsStateMessage -> enqueue {
+                    model.applyMessage(message)
                 }
             }
         }
