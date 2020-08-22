@@ -60,6 +60,10 @@ class ServerApp(
                 if (server.connections.size == 2) {
                     enqueue {
                         players = ArrayList(server.connections)
+                        if (players.size != 2) {
+                            players = listOf()
+                            return@enqueue
+                        }
 
                         var t = System.currentTimeMillis()
                         for (i in Constants.COUNTDOWN_FROM downTo 0) {
