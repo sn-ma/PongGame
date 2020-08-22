@@ -12,4 +12,6 @@ object Constants {
 
     const val UPDATE_TIME_MILLIS = 1000L / 20L
     const val MOVE_SPEED = 600f
+
+    const val COUNTDOWN_FROM = 3
 }

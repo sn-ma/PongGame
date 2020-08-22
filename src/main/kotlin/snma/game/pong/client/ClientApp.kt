@@ -12,6 +12,7 @@ import com.jme3.post.FilterPostProcessor
 import com.jme3.post.filters.BloomFilter
 import snma.game.pong.Constants
 import snma.game.pong.messages.ClientMovedMessage
+import snma.game.pong.messages.CountdownMessage
 import snma.game.pong.messages.PhysicsStateMessage
 import snma.game.pong.model.Model
 import kotlin.math.max
@@ -49,6 +50,9 @@ class ClientApp(
         })
         client.addMessageListener { _, message ->
             when (message) {
+                is CountdownMessage -> enqueue {
+                    log("Countdown: ${message.value}")
+                }
                 is PhysicsStateMessage -> enqueue {
                     model.applyMessage(message)
                 }
