@@ -109,6 +109,7 @@ class ServerApp(
                         }
                         players = listOf()
                         server.connections.forEach{ it.close("End of game") }
+                        eventQueue.cancelAll()
                     }
                 }
             }

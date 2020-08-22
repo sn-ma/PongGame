@@ -21,6 +21,10 @@ class EventQueue {
             }
         }
     }
+
+    fun cancelAll() {
+        tasksQueue.clear()
+    }
 }
 
 private class Task(val time: Long, val action: () -> Unit): Comparable<Task> {
