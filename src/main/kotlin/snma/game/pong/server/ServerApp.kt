@@ -7,12 +7,12 @@ import com.jme3.network.Network
 import com.jme3.network.Server
 import net.miginfocom.swing.MigLayout
 import snma.game.pong.Constants
+import snma.game.pong.event_queue.EventQueue
 import snma.game.pong.messages.ClientMovedMessage
 import snma.game.pong.messages.CountdownMessage
 import snma.game.pong.messages.Messages
 import snma.game.pong.model.Model
 import snma.game.pong.model.PlayerCollision
-import java.util.concurrent.PriorityBlockingQueue
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
@@ -37,7 +37,7 @@ class ServerApp(
 
     private var lastUpdateTime: Long = 0L
 
-    private val tasksQueue = PriorityBlockingQueue<Task>()
+    private val eventQueue = EventQueue()
 
     private fun log(msg: String) {
         SwingUtilities.invokeLater {
@@ -63,15 +63,15 @@ class ServerApp(
 
                         var t = System.currentTimeMillis()
                         for (i in Constants.COUNTDOWN_FROM downTo 0) {
-                            tasksQueue.add(Task(t) {
+                            eventQueue.enqueue(t) {
                                 val msg = CountdownMessage(i)
                                 players.forEach { it.send(msg) }
                                 log("Sending countdown $i")
-                            } )
+                            }
                             t += 1000L
                         }
                         t -= 1000L
-                        tasksQueue.add(Task(t) {
+                        eventQueue.enqueue(t) {
                             log("Starting the game")
                             model = Model(stateManager, assetManager, showTheGame, guiNode)
 
@@ -83,7 +83,7 @@ class ServerApp(
                                     model!!.adjustBallHorizontalVelocity(0.3f, 2f, 1f)
                                 }
                             }
-                        })
+                        }
                     }
                     log("2 players connected, starting the game")
                 } else if (server.connections.size > 2) {
@@ -146,20 +146,12 @@ class ServerApp(
             }
         }
 
-        if (tasksQueue.isNotEmpty() && tasksQueue.peek().time <= curTime) {
-            tasksQueue.poll().action.invoke()
-        }
+        eventQueue.executeIfNeeded()
     }
 
     override fun destroy() {
         server.close()
         super.destroy()
         onExit()
-    }
-}
-
-private class Task(val time: Long, val action: () -> Unit): Comparable<Task> {
-    override fun compareTo(other: Task): Int {
-        return (time - other.time).toInt()
     }
 }

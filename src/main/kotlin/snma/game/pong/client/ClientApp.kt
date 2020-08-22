@@ -85,14 +85,6 @@ class ClientApp(
         guiViewPort.isClearColor = true
     }
 
-//    private var lastUpdateTime = 0L;
-//    override fun simpleUpdate(tpf: Float) {
-//        if (lastUpdateTime + 100L < System.currentTimeMillis()) {
-//            lastUpdateTime = System.currentTimeMillis()
-//            model.applyMessage(model.generateMessage(false))
-//        }
-//    }
-
     override fun destroy() {
         if (client.isConnected) {
             client.close()
