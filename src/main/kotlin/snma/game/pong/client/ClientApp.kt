@@ -1,6 +1,8 @@
 package snma.game.pong.client
 
 import com.jme3.app.SimpleApplication
+import com.jme3.font.BitmapFont
+import com.jme3.font.BitmapText
 import com.jme3.input.KeyInput
 import com.jme3.input.controls.AnalogListener
 import com.jme3.input.controls.KeyTrigger
@@ -11,6 +13,7 @@ import com.jme3.network.NetworkClient
 import com.jme3.post.FilterPostProcessor
 import com.jme3.post.filters.BloomFilter
 import snma.game.pong.Constants
+import snma.game.pong.event_queue.EventQueue
 import snma.game.pong.messages.ClientMovedMessage
 import snma.game.pong.messages.CountdownMessage
 import snma.game.pong.messages.PhysicsStateMessage
@@ -26,6 +29,11 @@ class ClientApp(
     private lateinit var client: NetworkClient
     private lateinit var model: Model
 
+    private lateinit var font: BitmapFont
+    private lateinit var countdownText: BitmapText
+
+    private val eventQueue = EventQueue()
+
     private fun log(msg: String) {
         System.err.println(msg)
     }
@@ -34,6 +42,8 @@ class ClientApp(
         setDisplayStatView(false)
         isPauseOnLostFocus = false
         flyCam.isEnabled = false
+
+        font = assetManager.loadFont("fonts/Jamrul.fnt")
 
         model = Model(stateManager, assetManager, true, guiNode)
 
@@ -52,6 +62,22 @@ class ClientApp(
             when (message) {
                 is CountdownMessage -> enqueue {
                     log("Countdown: ${message.value}")
+                    guiNode.detachChild(countdownText)
+
+                    countdownText = BitmapText(font).apply {
+                        size = font.charSet.renderedSize.toFloat()
+                        text = message.value.let { if (it == 0) "Go!" else it.toString() }
+                        setLocalTranslation(
+                            (Constants.SCREEN_WIDTH - lineWidth) / 2f,
+                            (Constants.SCREEN_HEIGHT + height) / 2f,
+                            0f
+                        )
+                        guiNode.attachChild(this)
+                    }
+
+                    eventQueue.enqueue(System.currentTimeMillis() + 700L) {
+                        guiNode.detachChild(countdownText)
+                    }
                 }
                 is PhysicsStateMessage -> enqueue {
                     model.applyMessage(message)
@@ -83,12 +109,28 @@ class ClientApp(
         })
         guiViewPort.addProcessor(fpp)
         guiViewPort.isClearColor = true
+
+        countdownText = BitmapText(font).apply {
+            size = font.charSet.renderedSize.toFloat()
+            text = "Wait"
+            setLocalTranslation(
+                (Constants.SCREEN_WIDTH - lineWidth) / 2f,
+                (Constants.SCREEN_HEIGHT + height) / 2f,
+                0f
+            )
+            guiNode.attachChild(this)
+        }
+    }
+
+    override fun simpleUpdate(tpf: Float) {
+        eventQueue.executeIfNeeded()
     }
 
     override fun destroy() {
         if (client.isConnected) {
             client.close()
         }
+        eventQueue.cancelAll()
         super.destroy()
         onExit()
     }
