@@ -8,9 +8,7 @@ import com.jme3.bullet.collision.shapes.BoxCollisionShape
 import com.jme3.bullet.collision.shapes.PlaneCollisionShape
 import com.jme3.bullet.collision.shapes.SphereCollisionShape
 import com.jme3.bullet.control.RigidBodyControl
-import com.jme3.math.FastMath
-import com.jme3.math.Plane
-import com.jme3.math.Vector3f
+import com.jme3.math.*
 import com.jme3.scene.Node
 import com.jme3.texture.Texture2D
 import com.jme3.ui.Picture
@@ -120,12 +118,12 @@ class Model(
                 return@addCollisionListener
             }
             val collidedWith = if (event.nodeA == ball) event.nodeB else if (event.nodeB == ball) event.nodeA else return@addCollisionListener
-            val pos = event.positionWorldOnA // TODO check it is what we need
+            val pos = Vector2f(event.positionWorldOnA.x, event.positionWorldOnA.y) // TODO check it is what we need
             val collision = when (collidedWith) {
                 player -> PlayerCollision(pos, true)
                 enemy -> PlayerCollision(pos, false)
                 in walls -> WallCollision(pos)
-                in floors -> FloorCollision(pos)
+                in floors -> FloorCollision(pos, collidedWith == floors[1])
                 else -> throw RuntimeException("Unexpected collision object: $collidedWith")
             }
             collisionListener?.invoke(collision)
@@ -165,7 +163,11 @@ class Model(
     fun setBallVerticalVelocity(vVelocity: Float) {
         val ballControl = ball.getControl(RigidBodyControl::class.java)
         val vel = ballControl.linearVelocity
-        vel.y = if (vel.y > 0) vVelocity else -vVelocity
+        vel.y = when {
+            vel.y > 0 -> vVelocity
+            vel.y < 0 -> -vVelocity
+            else -> vVelocity * if (FastMath.rand.nextBoolean()) 1 else -1
+        }
         ballControl.linearVelocity = vel
     }
 
@@ -176,6 +178,14 @@ class Model(
             vel.x += vel.y * factor * (0.5f - FastMath.rand.nextFloat()) * 2f
             ballControl.linearVelocity = vel
         }
+    }
+
+    fun relocateBall() {
+        val ballControl = ball.getControl(RigidBodyControl::class.java)
+        ballControl.physicsLocation = Vector3f(Constants.SCREEN_WIDTH / 2f, Constants.SCREEN_HEIGHT / 2f, 0f)
+        ballControl.physicsRotation = Quaternion.IDENTITY
+        ballControl.angularVelocity = Vector3f.ZERO
+        ballControl.linearVelocity = Vector3f.ZERO
     }
 
     fun destroy() {

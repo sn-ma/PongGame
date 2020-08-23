@@ -13,6 +13,9 @@ object Messages {
         Serializer.registerClass(PhysicsStateMessage::class.java)
         Serializer.registerClass(CountdownMessage::class.java)
         Serializer.registerClass(ClientMovedMessage::class.java)
+        Serializer.registerClass(WallCollisionMessage::class.java)
+        Serializer.registerClass(PlayerCollisionMessage::class.java)
+        Serializer.registerClass(ScoreIncreaseMessage::class.java)
     }
 }
 
@@ -101,4 +104,30 @@ class CountdownMessage(var value: Int): AbstractMessage() {
 class ClientMovedMessage(var newPosition: Float) : AbstractMessage() {
     @Suppress("unused")
     constructor(): this(Float.POSITIVE_INFINITY)
+}
+
+sealed class EventMessage(var position: Vector2f): AbstractMessage() {
+    init {
+        isReliable = true
+    }
+}
+
+@Serializable
+class WallCollisionMessage(position: Vector2f): EventMessage(position) {
+    @Suppress("unused")
+    constructor(): this(Vector2f.ZERO)
+}
+
+@Serializable
+class PlayerCollisionMessage(position: Vector2f, var isYou: Boolean): EventMessage(position) {
+    @Suppress("unused")
+    constructor(): this(Vector2f.ZERO, false)
+}
+
+@Serializable
+class ScoreIncreaseMessage(
+    position: Vector2f, var yourNewScore: Int, var enemyNewScore: Int, var yourScoreIncreased: Boolean
+) : EventMessage(position) {
+    @Suppress("unused")
+    constructor(): this(Vector2f.ZERO, 0, 0, false)
 }

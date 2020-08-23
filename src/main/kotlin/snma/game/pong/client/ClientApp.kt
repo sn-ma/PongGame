@@ -14,9 +14,7 @@ import com.jme3.post.FilterPostProcessor
 import com.jme3.post.filters.BloomFilter
 import snma.game.pong.Constants
 import snma.game.pong.event_queue.EventQueue
-import snma.game.pong.messages.ClientMovedMessage
-import snma.game.pong.messages.CountdownMessage
-import snma.game.pong.messages.PhysicsStateMessage
+import snma.game.pong.messages.*
 import snma.game.pong.model.Model
 import kotlin.math.max
 import kotlin.math.min
@@ -31,6 +29,8 @@ class ClientApp(
 
     private lateinit var font: BitmapFont
     private lateinit var countdownText: BitmapText
+    private lateinit var yourScoreText: BitmapText
+    private lateinit var enemyScoreText: BitmapText
 
     private val eventQueue = EventQueue()
 
@@ -78,9 +78,24 @@ class ClientApp(
                     eventQueue.enqueue(System.currentTimeMillis() + 700L) {
                         guiNode.detachChild(countdownText)
                     }
+
+                    if (message.value == 0) {
+                        displayScore(0, 0)
+                    }
                 }
                 is PhysicsStateMessage -> enqueue {
                     model.applyMessage(message)
+                }
+                is WallCollisionMessage -> enqueue {
+                    // TODO: sound
+                }
+                is PlayerCollisionMessage -> enqueue {
+                    // TODO: sound
+                }
+                is ScoreIncreaseMessage -> enqueue {
+                    model.relocateBall()
+                    // TODO: sound
+                    displayScore(message.yourNewScore, message.enemyNewScore)
                 }
             }
         }
@@ -133,6 +148,28 @@ class ClientApp(
         eventQueue.cancelAll()
         super.destroy()
         onExit()
+    }
+
+    private fun displayScore(yourScore: Int, enemyScore: Int) {
+        log("$yourScore:$enemyScore")
+        if (!this::yourScoreText.isInitialized) {
+            yourScoreText = BitmapText(font).apply {
+                size = font.charSet.renderedSize.toFloat()
+                guiNode.attachChild(this)
+            }
+            enemyScoreText = BitmapText(font).apply {
+                size = font.charSet.renderedSize.toFloat()
+                guiNode.attachChild(this)
+            }
+        }
+        yourScoreText.apply {
+            text = yourScore.toString()
+            setLocalTranslation(Constants.SCREEN_WIDTH - lineWidth - 20f, Constants.SCREEN_HEIGHT * 0.25f + 0.5f * height, 0f)
+        }
+        enemyScoreText.apply {
+            text = enemyScore.toString()
+            setLocalTranslation(Constants.SCREEN_WIDTH - lineWidth - 20f, Constants.SCREEN_HEIGHT * 0.75f + 0.5f * height, 0f)
+        }
     }
 }
 

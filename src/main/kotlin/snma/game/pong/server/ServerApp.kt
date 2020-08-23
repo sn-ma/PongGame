@@ -8,11 +8,11 @@ import com.jme3.network.Server
 import net.miginfocom.swing.MigLayout
 import snma.game.pong.Constants
 import snma.game.pong.event_queue.EventQueue
-import snma.game.pong.messages.ClientMovedMessage
-import snma.game.pong.messages.CountdownMessage
-import snma.game.pong.messages.Messages
+import snma.game.pong.messages.*
+import snma.game.pong.model.FloorCollision
 import snma.game.pong.model.Model
 import snma.game.pong.model.PlayerCollision
+import snma.game.pong.model.WallCollision
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
@@ -33,6 +33,7 @@ class ServerApp(
 
     private lateinit var server: Server
     private var players = listOf<HostedConnection>()
+    private var playersScore = arrayListOf(0, 0)
     private var model: Model? = null
 
     private var lastUpdateTime: Long = 0L
@@ -64,6 +65,7 @@ class ServerApp(
                             players = listOf()
                             return@enqueue
                         }
+                        playersScore = arrayListOf(0, 0)
 
                         var t = System.currentTimeMillis()
                         for (i in Constants.COUNTDOWN_FROM downTo 0) {
@@ -83,8 +85,31 @@ class ServerApp(
                             model!!.adjustBallHorizontalVelocity(1f, 3f, 1f)
 
                             model!!.setCollisionListener { collision ->
-                                if (collision is PlayerCollision) {
-                                    model!!.adjustBallHorizontalVelocity(0.3f, 2f, 1f)
+                                when (collision) {
+                                    is WallCollision -> {
+                                        val msg = WallCollisionMessage(collision.position)
+                                        players.forEach { it.send(msg) }
+                                    }
+                                    is PlayerCollision -> {
+                                        model!!.adjustBallHorizontalVelocity(0.3f, 2f, 1f)
+
+                                        players.getOrNull(0)?.send(PlayerCollisionMessage(collision.position, collision.isYou))
+                                        players.getOrNull(1)?.send(PlayerCollisionMessage(collision.position, !collision.isYou))
+                                    }
+                                    is FloorCollision -> {
+                                        model!!.relocateBall()
+
+                                        if (collision.isYourWin) {
+                                            playersScore[0]++
+                                        } else {
+                                            playersScore[1]++
+                                        }
+
+                                        players.getOrNull(0)
+                                            ?.send(ScoreIncreaseMessage(collision.position, playersScore[0], playersScore[1], collision.isYourWin))
+                                        players.getOrNull(1)
+                                            ?.send(ScoreIncreaseMessage(collision.position, playersScore[1], playersScore[0], !collision.isYourWin))
+                                    }
                                 }
                             }
                         }
@@ -108,7 +133,7 @@ class ServerApp(
                             model = null
                         }
                         players = listOf()
-                        server.connections.forEach{ it.close("End of game") }
+                        server.connections.forEach { it.close("End of game") }
                         eventQueue.cancelAll()
                     }
                 }
