@@ -28,7 +28,10 @@ class SelectModePanel(switchPanelCbc: (JPanel) -> Unit): JTabbedPane() {
                         ClientApp(
                             host = addrField.text,
                             port = portField.text.toInt(),
-                            onExit = { SwingUtilities.invokeLater { this@apply.isEnabled = true } }
+                            onExit = { SwingUtilities.invokeLater {
+                                isEnabled = true
+                                this@SelectModePanel.isEnabled = true
+                            } }
                         ).apply {
                             setSettings(AppSettings(true).apply {
                                 title = "Pong Game"
@@ -36,10 +39,10 @@ class SelectModePanel(switchPanelCbc: (JPanel) -> Unit): JTabbedPane() {
                                 samples = 4
                                 isVSync = true
                             })
-//                            Thread { start() }.start()
                             start(JmeContext.Type.Display)
                         }
                         isEnabled = false
+                        this@SelectModePanel.isEnabled = false
                     } catch (ex: Exception) {
                         errorLabel.text = "Failed: $ex"
                     }
