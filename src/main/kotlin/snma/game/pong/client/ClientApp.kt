@@ -64,8 +64,7 @@ class ClientApp(
                     log("Countdown: ${message.value}")
                     guiNode.detachChild(countdownText)
 
-                    countdownText = BitmapText(font).apply {
-                        size = font.charSet.renderedSize.toFloat()
+                    countdownText.apply {
                         text = message.value.let { if (it == 0) "Go!" else it.toString() }
                         setLocalTranslation(
                             (Constants.SCREEN_WIDTH - lineWidth) / 2f,
