@@ -109,8 +109,8 @@ class Model(
             addWall(Vector3f(1f, 0f, 0f), 0f)
         )
         floors = listOf(
-            addWall(Vector3f(0f, 1f, 0f), 0f),
-            addWall(Vector3f(0f, -1f, 0f), -Constants.SCREEN_HEIGHT.toFloat())
+            addWall(Vector3f(0f, 1f, 0f), -Constants.BALL_RADIUS.toFloat()),
+            addWall(Vector3f(0f, -1f, 0f), (-Constants.SCREEN_HEIGHT - Constants.BALL_RADIUS).toFloat())
         )
 
         bulletAppState.physicsSpace.addCollisionListener { event ->

@@ -43,7 +43,7 @@ class ClientApp(
         isPauseOnLostFocus = false
         flyCam.isEnabled = false
 
-        font = assetManager.loadFont("fonts/Jamrul.fnt")
+        font = assetManager.loadFont("fonts/Ubuntu.fnt")
 
         model = Model(stateManager, assetManager, true, guiNode)
 
