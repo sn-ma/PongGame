@@ -194,6 +194,8 @@ class Model(
         guiNode.detachChild(player)
         guiNode.detachChild(enemy)
         guiNode.detachChild(ball)
+        walls.forEach { guiNode.detachChild(it) }
+        floors.forEach { guiNode.detachChild(it) }
     }
 
     private fun loadImageNode(name: String): Node {
