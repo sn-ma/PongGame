@@ -11,7 +11,10 @@ object Constants {
     const val GAME_VERSION = 1
 
     const val UPDATE_TIME_MILLIS = 1000L / 20L
-    const val MOVE_SPEED = 600f
+    const val PLAYER_MOVE_SPEED = 600f
 
     const val COUNTDOWN_FROM = 3
+
+    const val INITIAL_V_VELOCITY = 100F
+    const val UPDATE_VELOCITY_EACH_MS = 70L
 }

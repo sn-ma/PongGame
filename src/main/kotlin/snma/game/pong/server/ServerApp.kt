@@ -35,8 +35,10 @@ class ServerApp(
     private var players = listOf<HostedConnection>()
     private var playersScore = arrayListOf(0, 0)
     private var model: Model? = null
+    private var vVelocity = 0f
 
     private var lastUpdateTime: Long = 0L
+    private var lastVelocityUpdateTime: Long = 0L
 
     private val eventQueue = EventQueue()
 
@@ -81,7 +83,8 @@ class ServerApp(
                             log("Starting the game")
                             model = Model(stateManager, assetManager, showTheGame, guiNode)
 
-                            model!!.setBallVerticalVelocity(100f) // Hack
+                            vVelocity = Constants.INITIAL_V_VELOCITY
+                            model!!.setBallVerticalVelocity(vVelocity)
                             model!!.adjustBallHorizontalVelocity(1f, 3f, 1f)
 
                             model!!.setCollisionListener { collision ->
@@ -97,6 +100,7 @@ class ServerApp(
                                         players.getOrNull(1)?.send(PlayerCollisionMessage(collision.position, !collision.isYou))
                                     }
                                     is FloorCollision -> {
+                                        vVelocity = Constants.INITIAL_V_VELOCITY
                                         model!!.relocateBall()
 
                                         if (collision.isYourWin) {
@@ -164,10 +168,15 @@ class ServerApp(
         val curTime = System.currentTimeMillis()
 
         if (model != null && players.size == 2) {
+            if (lastVelocityUpdateTime + Constants.UPDATE_VELOCITY_EACH_MS <= curTime) {
+                lastVelocityUpdateTime = curTime
+
+                vVelocity *= 1.001f
+            }
             if (lastUpdateTime + Constants.UPDATE_TIME_MILLIS <= curTime) {
                 lastUpdateTime = curTime
 
-                model!!.setBallVerticalVelocity(100f) // Hack
+                model!!.setBallVerticalVelocity(vVelocity)
 
                 val normalMsg = model!!.generateMessage(false)
                 model!!.applyMessage(normalMsg)

@@ -104,7 +104,7 @@ class ClientApp(
         inputManager.addMapping(Input.LEFT.name, KeyTrigger(KeyInput.KEY_LEFT), KeyTrigger(KeyInput.KEY_A))
         inputManager.addMapping(Input.RIGHT.name, KeyTrigger(KeyInput.KEY_RIGHT), KeyTrigger(KeyInput.KEY_D))
         inputManager.addListener(AnalogListener { name: String, value: Float, _ ->
-            var dx = value * Constants.MOVE_SPEED
+            var dx = value * Constants.PLAYER_MOVE_SPEED
             if (name == Input.LEFT.name) {
                 dx *= -1f
             }
