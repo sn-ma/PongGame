@@ -15,6 +15,6 @@ object Constants {
 
     const val COUNTDOWN_FROM = 3
 
-    const val INITIAL_V_VELOCITY = 100F
+    const val INITIAL_V_VELOCITY = 200F
     const val UPDATE_VELOCITY_EACH_MS = 70L
 }

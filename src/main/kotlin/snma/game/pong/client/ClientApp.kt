@@ -32,6 +32,8 @@ class ClientApp(
     private lateinit var yourScoreText: BitmapText
     private lateinit var enemyScoreText: BitmapText
 
+    private lateinit var sounds: Sounds
+
     private val eventQueue = EventQueue()
 
     private fun log(msg: String) {
@@ -42,6 +44,8 @@ class ClientApp(
         setDisplayStatView(false)
         isPauseOnLostFocus = false
         flyCam.isEnabled = false
+
+        sounds = Sounds(assetManager)
 
         font = assetManager.loadFont("fonts/Ubuntu.fnt")
 
@@ -86,14 +90,14 @@ class ClientApp(
                     model.applyMessage(message)
                 }
                 is WallCollisionMessage -> enqueue {
-                    // TODO: sound
+                    sounds.playWallCollision()
                 }
                 is PlayerCollisionMessage -> enqueue {
-                    // TODO: sound
+                    sounds.playPlayerCollision()
                 }
                 is ScoreIncreaseMessage -> enqueue {
                     model.relocateBall()
-                    // TODO: sound
+                    sounds.playExplosion()
                     displayScore(message.yourNewScore, message.enemyNewScore)
                 }
             }
