@@ -1,4 +1,4 @@
-# Pool Game
+# Pong Game
 
 Sample project to learn JMonkeyEngine (game engine).
 
